@@ -5,6 +5,8 @@
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-%E2%89%A52026.9.3-4B5563)](https://openclaw.ai)
 [![Skill](https://img.shields.io/badge/type-agent--skill-2563EB)](#安装)
 [![GitHub](https://img.shields.io/badge/github-longppai68--ai%2Ffake--foreign--health--audit-181717?logo=github)](https://github.com/longppai68-ai/fake-foreign-health-audit)
+[![Release](https://img.shields.io/github/v/release/longppai68-ai/fake-foreign-health-audit?label=release)](https://github.com/longppai68-ai/fake-foreign-health-audit/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/longppai68-ai/fake-foreign-health-audit/total?label=downloads)](https://github.com/longppai68-ai/fake-foreign-health-audit/releases)
 [![Python](https://img.shields.io/badge/python-3.8%2B-3776AB)](https://www.python.org/)
 [![Dependencies](https://img.shields.io/badge/dependencies-none%20(stdlib)-brightgreen)](#依赖)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -20,6 +22,7 @@
 - [为什么需要它](#为什么需要它)
 - [核心框架](#核心框架)
 - [亮点](#亮点)
+- [下载](#下载)
 - [安装](#安装)
 - [快速开始](#快速开始)
 - [目录结构](#目录结构)
@@ -89,6 +92,19 @@
 
 ---
 
+## 下载
+
+| 下载 | 链接 | 说明 |
+|---|---|---|
+| **最新发布包** | [`fake-foreign-health-audit-v1.0.0.zip`](https://github.com/longppai68-ai/fake-foreign-health-audit/releases/latest/download/fake-foreign-health-audit-v1.0.0.zip) | 开箱可用，含全部文件 |
+| 源码 zip | [`v1.0.0.zip`](https://github.com/longppai68-ai/fake-foreign-health-audit/archive/refs/tags/v1.0.0.zip) | GitHub 自动打包 |
+| 源码 tar.gz | [`v1.0.0.tar.gz`](https://github.com/longppai68-ai/fake-foreign-health-audit/archive/refs/tags/v1.0.0.tar.gz) | 同上 |
+| 全部版本 | [Releases](https://github.com/longppai68-ai/fake-foreign-health-audit/releases) | 版本历史 |
+
+> ℹ️ 版本号只存在于 **git tag** 层面——OpenClaw 的 `SKILL.md` frontmatter **不接受 `version` 字段**（`quick_validate.py` 会报错），所以文件里不写版本号。
+
+---
+
 ## 安装
 
 ### 方式一：从 GitHub 安装（推荐）
@@ -97,14 +113,21 @@
 openclaw skills install git:https://github.com/longppai68-ai/fake-foreign-health-audit --agent <agent-id>
 ```
 
-### 方式二：克隆后本地安装
+### 方式二：下载发布包后本地安装
+
+```bash
+# 下载并解压上面的「最新发布包」，然后：
+openclaw skills install ./fake-foreign-health-audit --agent <agent-id>
+```
+
+### 方式三：克隆后本地安装
 
 ```bash
 git clone https://github.com/longppai68-ai/fake-foreign-health-audit.git
 openclaw skills install ./fake-foreign-health-audit --agent <agent-id>
 ```
 
-### 方式三：手动放置
+### 方式四：手动放置
 
 把整个目录放进目标 agent 的 workspace skills 目录：
 
@@ -498,6 +521,7 @@ README 里的每条事实都应**可被复核**。改动后请顺手检查：
 - `README.md`（本文件）
 - **输出契约** — 报告格式固定化，取代原先宽松的"报告模板"
 - **定性强制单一类别** — 只允许 `C` / `B/C 之间` / `倾向 B，需补充证据` 三种写法，禁用"接近""存疑""疑似"等含糊限定
+- **发布 v1.0.0** — 首个带 tag 的 Release，附开箱可用的发布包与自动生成的源码包
 - `references/endpoints.md` 补日本 / 韩国 / 美国州级公司查询端点
 - `references/jurisdictions.md` 补日本 / 韩国 / 新西兰三节
 - 标签法证补：反向图片搜索、GMP 证书核查、3 条红旗
