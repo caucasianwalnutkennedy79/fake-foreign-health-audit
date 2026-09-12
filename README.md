@@ -4,9 +4,10 @@
 
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-%E2%89%A52026.9.3-4B5563)](https://openclaw.ai)
 [![Skill](https://img.shields.io/badge/type-agent--skill-2563EB)](#安装)
+[![GitHub](https://img.shields.io/badge/github-longppai68--ai%2Ffake--foreign--health--audit-181717?logo=github)](https://github.com/longppai68-ai/fake-foreign-health-audit)
 [![Python](https://img.shields.io/badge/python-3.8%2B-3776AB)](https://www.python.org/)
 [![Dependencies](https://img.shields.io/badge/dependencies-none%20(stdlib)-brightgreen)](#依赖)
-[![License](https://img.shields.io/badge/license-MIT-green)](#许可)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 给它一个商品链接、包装照片或品牌名，它去查**宣称国的官方数据库、工商登记和本土渠道**，出一份带证据分级的鉴定报告。
 
@@ -90,13 +91,20 @@
 
 ## 安装
 
-### 方式一：从本地目录安装（推荐）
+### 方式一：从 GitHub 安装（推荐）
 
 ```bash
-openclaw skills install /path/to/fake-foreign-health-audit --agent <agent-id>
+openclaw skills install git:https://github.com/longppai68-ai/fake-foreign-health-audit --agent <agent-id>
 ```
 
-### 方式二：手动放置
+### 方式二：克隆后本地安装
+
+```bash
+git clone https://github.com/longppai68-ai/fake-foreign-health-audit.git
+openclaw skills install ./fake-foreign-health-audit --agent <agent-id>
+```
+
+### 方式三：手动放置
 
 把整个目录放进目标 agent 的 workspace skills 目录：
 
@@ -104,6 +112,8 @@ openclaw skills install /path/to/fake-foreign-health-audit --agent <agent-id>
 # 生效位置（2026.9.3 起为 agent 作用域目录）
 cp -R fake-foreign-health-audit ~/.openclaw/workspace/<agent>/skills/
 ```
+
+> ⚠️ 手动放置时**不要**把 `.git/` 一并拷贝——多 agent 同步请参考 [开发与维护](#开发与维护) 里的 `rsync` 命令（已排除 `.git`）。
 
 ### 验证安装
 
@@ -449,12 +459,13 @@ SRC=/path/to/fake-foreign-health-audit
 for D in ~/.openclaw/workspace/skills/fake-foreign-health-audit \
          ~/.openclaw/workspace/main/skills/fake-foreign-health-audit \
          ~/.openclaw/workspace-{cpp,pp1,pp6,pp8}/skills/fake-foreign-health-audit; do
-  rsync -a --exclude='.openclaw' --exclude='.cache' \
+  rsync -a --exclude='.git' --exclude='.openclaw' --exclude='.cache' \
         --exclude='__pycache__' --exclude='.DS_Store' "$SRC"/ "$D"/
 done
 ```
 
 > ⚠️ `--exclude='.openclaw'` 不能省——管理型副本里有 `.openclaw/source-origin.json` 溯源元数据，覆盖会破坏它。
+> ⚠️ `--exclude='.git'` 也不能省——本仓库已 `git init`，不排除会把版本库整个拷进每个 agent 目录。
 > ⚠️ 注意 **main agent 的路径是嵌套的** `workspace/main/skills/`，不是 `workspace-main/`。
 
 ### 发布打包
