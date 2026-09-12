@@ -475,22 +475,6 @@ openclaw skills check --agent <agent-id>      # Missing requirements 应为 0
 openclaw skills info  fake-foreign-health-audit --agent <agent-id>
 ```
 
-### 同步到多个 agent
-
-```bash
-SRC=/path/to/fake-foreign-health-audit
-for D in ~/.openclaw/workspace/skills/fake-foreign-health-audit \
-         ~/.openclaw/workspace/main/skills/fake-foreign-health-audit \
-         ~/.openclaw/workspace-{cpp,pp1,pp6,pp8}/skills/fake-foreign-health-audit; do
-  rsync -a --exclude='.git' --exclude='.openclaw' --exclude='.cache' \
-        --exclude='__pycache__' --exclude='.DS_Store' "$SRC"/ "$D"/
-done
-```
-
-> ⚠️ `--exclude='.openclaw'` 不能省——管理型副本里有 `.openclaw/source-origin.json` 溯源元数据，覆盖会破坏它。
-> ⚠️ `--exclude='.git'` 也不能省——本仓库已 `git init`，不排除会把版本库整个拷进每个 agent 目录。
-> ⚠️ 注意 **main agent 的路径是嵌套的** `workspace/main/skills/`，不是 `workspace-main/`。
-
 ### 发布打包
 
 ```bash
