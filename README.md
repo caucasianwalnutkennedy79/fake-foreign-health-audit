@@ -172,7 +172,7 @@ python3 scripts/ean_check.py 4262366230132
 ```
 fake-foreign-health-audit/
 ├── README.md                     # 本文件（面向人）
-├── SKILL.md                      # 主文件：工作流、原则、红旗清单、报告模板（面向 agent）
+├── SKILL.md                      # 主文件：工作流、原则、红旗清单、输出契约（面向 agent）
 ├── references/
 │   ├── jurisdictions.md          # 各国核查路径与数据库字段含义
 │   ├── endpoints.md              # 可直接复制的命令与端点（含踩坑记录）
@@ -496,14 +496,18 @@ README 里的每条事实都应**可被复核**。改动后请顺手检查：
 **新增**
 - `scripts/taobao_share.py` — 电商分享文本解析，正面解决"商品页需登录态"的问题
 - `README.md`（本文件）
+- **输出契约** — 报告格式固定化，取代原先宽松的"报告模板"
 - `references/endpoints.md` 补日本 / 韩国 / 美国州级公司查询端点
 - `references/jurisdictions.md` 补日本 / 韩国 / 新西兰三节
 - 标签法证补：反向图片搜索、GMP 证书核查、3 条红旗
 - SKILL.md 第 0 步补 CN 电商访问现实与反误判硬约束
+- **源纪律**（0.5 节 + 核心原则 7/8 条）：只用文档列出的源、单源只试一次、SIGTERM ≠ 未获证据
 
 **修复**
 | 问题 | 影响 |
 |---|---|
+| **文档里写了一个从未实测的死端点** | `trademark.trademarkia.com` TLS 层根本不通，且被误放在「瑞士 IGE」节下（实为美国聚合站）→ 已删除并列入黑名单 |
+| **报告格式在不同 run 之间漂移** | 原模板 12 个占位符中**有 4 个在章节标题里**，导致每次 `2.x` 标题都不一样 → 改为刚性输出契约 |
 | SKILL.md/references 用相对路径引用脚本 | agent 从非 skill 目录执行会 `No such file or directory` → 全部改为 `{baseDir}/`（31 处） |
 | `taobao_share.py` 标题提取会取到营销词 | `【双十一狂欢大促】…「真实标题」` 会把 `双十一狂欢大促` 当标题 → 改为强/弱模式 + 取最右 |
 | `taobao_share.py` 无法解压原始 deflate | 服务器发 RFC1951 时 `incorrect header check` → 改为两路都试 |
