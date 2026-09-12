@@ -25,6 +25,56 @@ curl -sSL --compressed -m 45 -A "$UA" -H "Accept-Language: zh-CN,zh;q=0.9" "<URL
 
 ---
 
+## 0.5 源纪律（**先读这一节，能省掉大半无用功**）
+
+### 规则一：只用本文件列出的源
+
+本文件里的每个端点都是**实测过**的，并标注了可用性。**不要临场另找站点**——那类站点（药品库、商标聚合站、企业黄页）绝大多数上了反爬，试了也是白试。
+
+> **反例（真实发生）**：为查一个德国保健品，去查了 `gelbe-liste.de`——那是**德国药品**数据库（Arzneimittel），
+> 对膳食补充剂本就没什么收录，而且**不在本 skill 的任何推荐列表里**。结果超时被 SIGTERM 杀掉，白耗一轮。
+
+### 规则二：单个源最多试一次，失败就走退路链
+
+```
+官方库 → 官方库的移动端/API → 搜索引擎摘要 → 第三方聚合（标注置信度）
+```
+
+**不要对同一个站点反复重试、换 UA、加超时**。本文件对每个源都写了已知状态与退路，照着换下一条即可。
+
+### 规则三：给足超时预算，但别把超时当结论
+
+| 场景 | 建议 |
+|---|---|
+| 单次 curl | `-m 45`（大文件如下载 LNHPD 全量数据用 `-m 300`） |
+| **整个任务的执行预算** | 查 3–5 个源通常要 **2–5 分钟**；若你的 exec 超时更短，**会被 SIGTERM 杀掉**——那是**你的超时**，不是站点不可用 |
+| 被 SIGTERM 时 | 在报告里写「**未完成**」，**不要**写「该源不存在 / 未查到」 |
+
+> 🔴 **SIGTERM ≠ 未获证据**。前者是本地超时中断，后者是真的查过了。两者在报告里的措辞完全不同。
+
+### 规则四：失败必须原样记录，不得升级为结论
+
+| 实际发生 | 可以写 | **不可以**写 |
+|---|---|---|
+| 403 / Cloudflare | 「该渠道被拦截，未获证据」 | 「该品牌不存在」 |
+| TLS/连接失败 | 「端点不可达，改用搜索引擎摘要」 | 「查无此商标」 |
+| 本地 SIGTERM | 「本轮未完成，需延长超时重试」 | 「未查到相关信息」 |
+
+### 已实测**不可靠**的端点（别再试）
+
+| 端点 | 状态 |
+|---|---|
+| `trademark.trademarkia.com` | 🔴 TLS 层失败，完全不可达 |
+| `companyhouse.de` | ❌ 403 |
+| `handelsregister.ai` | ❌ 403（但 URL 路径自带行业分类，可作旁证） |
+| `docmorris.de` | ❌ 403 |
+| `well.ca` | ❌ 403 |
+| `walmart.ca` | ❌ 人机验证 |
+| `shoppersdrugmart.ca` | ❌ 403 |
+| `tsdrapi.uspto.gov` | ❌ 401（需 API key） |
+
+---
+
 ## 1. 加拿大 LNHPD（最高价值）
 
 ### 1.1 全量许可 JSON（资源名首字母**必须大写**）
@@ -272,16 +322,40 @@ python3 {baseDir}/scripts/taobao_share.py --json '…'      # 结构化输出
 
 ## 8. 商标
 
-| 库 | 端点 | 备注 |
-|---|---|---|
-| USPTO 官方 | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn<号>/status.json` | **401，需 API key** |
-| Justia | `https://trademarks.justia.com/owners/<owner>-<id>/` | 常被 Cloudflare 拦 |
-| TrademarkElite | `https://www.trademarkelite.com/...` | 常 403；但**搜索引擎摘要**常已含状态（如 "DEAD / Abandoned"） |
-| 德国 DPMA | `https://register.dpma.de/DPMAregister/marke/...` | **需 JavaScript** |
-| 瑞士 IGE | `https://www.swissreg.ch/...` | **需 JavaScript** |
-| 第三方镜像 | `markenmeldungen.ch` 等 | 可用，但**页面有模板瑕疵**，需标注置信度 |
+> ⚠️ **商标是最容易白费功夫的一环**：几乎所有免费聚合站都上 Cloudflare / 反爬。**别在单个站点上反复重试**，按下面选路，失败就换下一条。
 
-**实用退路**：官网查不动时，用搜索引擎检索 `"<商标>" Marke Inhaber`、`"<商标>" trademark owner`，从**结果摘要**里取状态，并在报告中标注"来自第三方聚合站，置信度中"。
+| 库 | 端点 | 可用性（实测） |
+|---|---|---|
+| **加拿大 CIPO ★推荐** | `https://ised-isde.canada.ca/opic/recherche-marques/<申请号>-00?lang=eng` | ✅ **200，可直接抓**（加拿大是本案最强法域，优先用它） |
+| ~~旧 CIPO 入口~~ | ~~`https://www.ic.gc.ca/app/opic-cipo/trdmrks/...`~~ | 🔴 **已失效**：SSL 握手失败（`tlsv1 alert internal error`）。改用上面的 `ised-isde` 新域名 |
+| **USPTO 官方检索** | `https://tmsearch.uspto.gov/` | ✅ 200，但**需 JS** |
+| **USPTO TSDR（官方）** | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn<号>/status.json` | ❌ **401，需 API key** |
+| Justia | `https://trademarks.justia.com/owners/<owner>-<id>/` | ❌ 常被 Cloudflare 拦 |
+| TrademarkElite | `https://www.trademarkelite.com/...` | ❌ 常 403；但**搜索引擎摘要**常已含状态 |
+| ~~Trademarkia~~ | ~~`trademark.trademarkia.com`~~ | 🔴 **已废弃，勿用**：TLS 层直接失败（连接超时 / `SSL_ERROR_SYSCALL`），实测完全不可达 |
+| 德国 DPMA | `https://register.dpma.de/DPMAregister/marke/...` | ⚠️ **需 JavaScript** |
+| 瑞士 IGE | `https://www.swissreg.ch/...` | ⚠️ **需 JavaScript** |
+| 第三方镜像 | `markenmeldungen.ch` | ⚠️ 可抓，但**页面有模板瑕疵**（如年份字段明显错误），必须标注置信度 |
+
+### ✅ 推荐做法：不要死磕官网，直接走「搜索摘要」退路
+
+商标核查里**性价比最高的其实是搜索引擎摘要**——聚合站自己被拦，但它们的页面**已被搜索引擎索引**，摘要里常常就带着关键状态：
+
+```
+"<商标名>" trademark owner
+"<商标名>" Marke Inhaber
+"<商标名>" trademark DEAD abandoned
+site:trademarks.justia.com "<商标名>"
+site:trademarkelite.com "<商标名>"
+```
+
+**实战案例**：查 `COVO COYO` 的 USPTO 状态时，`trademarkelite.com` 本体被 403 拦死，但搜索摘要直接给出了：
+
+> `COVO COYO Trademark (USPTO Serial 90015702) | ... DEAD On 8/21/2021 - Abandoned`
+
+→ 状态、序列号、日期全都拿到了，**根本不需要打开那个站**。
+
+**报告写法**：走摘要路径获取的信息，一律标注「**来自第三方聚合站，未能直连核实，置信度中**」，并给出序列号/日期等可复核要素。
 
 ---
 
@@ -405,10 +479,19 @@ sos.state.tx.us（可直接网页查询）
 ## 15. 瑞士 IGE 商标查询（补充）
 
 ```bash
-# 官方 swissreg.ch 需 JS，用搜索引擎退路
-# Google: site:swissreg.ch "<商标名>"
-# 或第三方镜像
-curl -sSL --compressed -A "$UA" "https://trademark.trademarkia.com/search/trademarks?query=<商标名>" -o tm.html
+# 官方 swissreg.ch 需 JavaScript，纯 HTTP 无用（实测返回 "IPI Database Application startup failed"）
+#   官方入口: https://www.swissreg.ch/  （需浏览器 / JS）
+
+# 退路 1：搜索引擎（推荐，性价比最高）
+#   site:swissreg.ch "<商标名>"
+#   "<商标名>" Marke Inhaber Schweiz
+
+# 退路 2：第三方镜像（可抓，但有模板瑕疵，务必标注置信度）
+curl -sSL --compressed -A "$UA" "https://www.markenmeldungen.ch/marke.cfm?marke=<商标名>" -o tm.html
 ```
+
+> 🔴 **不要用 `trademark.trademarkia.com`** —— 那是美国商标聚合站，**既不是瑞士官方镜像**，
+> 又已实测 TLS 层不可达（连接超时 / `SSL_ERROR_SYSCALL`）。此前版本误将其列在此处，已移除。
+> 查瑞士商标**只认** `swissreg.ch`（官方）或其搜索摘要。
 
 ---
