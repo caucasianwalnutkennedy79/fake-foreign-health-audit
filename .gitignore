@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+__MACOSX/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OpenClaw 安装元数据（由 CLI 写入，不应入库）
+.openclaw/
+
+# 本地缓存 / 临时产物
+.cache/
+*.zip
+*.patch
