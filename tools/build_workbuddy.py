@@ -52,6 +52,25 @@ allowed-tools: Read, Write, Bash, WebFetch
 
 """
 
+# ---------------------------------------------------------------- 变体自带文件
+# 注意：生成时会先清空输出目录，所以变体专属文件必须由脚本产出，
+#       否则每次重新生成都会丢失（曾经踩过这个坑）。
+WB_GITIGNORE = """# macOS / Windows
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 临时产物
+.cache/
+*.zip
+"""
+
 # ---------------------------------------------------------------- 文本替换
 def convert_text(text: str, relpath: str) -> str:
     """把 OpenClaw 写法转成 WorkBuddy + Windows 写法。"""
@@ -234,9 +253,21 @@ def main():
     ap.add_argument("--out", default=DEFAULT_OUT, help="输出目录")
     args = ap.parse_args()
 
+    # 清空输出目录，但**保留 .git**——变体目录同时是它的 git 仓库，
+    # 直接 rmtree 会把版本历史一起删掉（曾经踩过这个坑）。
+    # 注意：暂存位置必须在输出目录**之外**，否则会被 rmtree 一并删除。
+    preserved_git = None
+    gitdir = os.path.join(args.out, ".git")
+    if os.path.isdir(gitdir):
+        preserved_git = os.path.abspath(args.out) + ".gitpreserve"
+        if os.path.exists(preserved_git):
+            shutil.rmtree(preserved_git)
+        shutil.move(gitdir, preserved_git)
     if os.path.exists(args.out):
         shutil.rmtree(args.out)
     os.makedirs(args.out)
+    if preserved_git and os.path.isdir(preserved_git):
+        shutil.move(preserved_git, gitdir)
 
     n_files = 0
     for root, dirs, files in os.walk(MASTER):
@@ -265,6 +296,11 @@ def main():
             else:
                 shutil.copy2(src, dst)
             n_files += 1
+
+    # 变体专属文件（不能放在 master 里，否则会随 EXCLUDE_FILES 被跳过）
+    with open(os.path.join(args.out, ".gitignore"), "w", encoding="utf-8") as fh:
+        fh.write(WB_GITIGNORE)
+    n_files += 1
 
     print(f"✅ 已生成 {n_files} 个文件 → {args.out}")
     return 0
